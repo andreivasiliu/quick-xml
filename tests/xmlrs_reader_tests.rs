@@ -40,25 +40,25 @@ fn sample_2_full() {
     );
 }
 
-#[cfg(all(not(windows), feature = "escape-html"))]
-#[test]
-fn html5() {
-    test(
-        include_bytes!("documents/html5.html"),
-        include_bytes!("documents/html5.txt"),
-        false,
-    );
-}
+// #[cfg(all(not(windows), feature = "escape-html"))]
+// #[test]
+// fn html5() {
+//     test(
+//         include_str!("documents/html5.html"),
+//         include_str!("documents/html5.txt"),
+//         false,
+//     );
+// }
 
-#[cfg(all(windows, feature = "escape-html"))]
-#[test]
-fn html5() {
-    test(
-        include_bytes!("documents/html5.html"),
-        include_bytes!("documents/html5-windows.txt"),
-        false,
-    );
-}
+// #[cfg(all(windows, feature = "escape-html"))]
+// #[test]
+// fn html5() {
+//     test(
+//         include_str!("documents/html5.html"),
+//         include_str!("documents/html5-windows.txt"),
+//         false,
+//     );
+// }
 
 // #[test]
 // fn sample_3_short() {
@@ -299,17 +299,17 @@ fn default_namespace_applies_to_end_elem() {
 fn test(input: &str, output: &str, is_short: bool) {
     // Normalize newlines on Windows to just \n, which is what the reader and
     // writer use.
-    let input = input.replace("\r\n", "\n");
-    let input = input.as_bytes();
-    let output = output.replace("\r\n", "\n");
-    let output = output.as_bytes();
-    let mut reader = Reader::from_reader(input);
+    // let input = input.replace("\r\n", "\n");
+    // let input = input.as_bytes();
+    // let output = output.replace("\r\n", "\n");
+    // let output = output.as_bytes();
+    let mut reader = Reader::from_reader(input.as_bytes());
     reader
         .trim_text(is_short)
         .check_comments(true)
         .expand_empty_elements(false);
 
-    let mut spec_lines = SpecIter(output).enumerate();
+    let mut spec_lines = SpecIter(output.as_bytes()).enumerate();
     let mut buf = Vec::new();
     let mut ns_buffer = Vec::new();
 
