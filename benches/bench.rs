@@ -1,19 +1,25 @@
-#![feature(test)]
-
 extern crate quick_xml;
-extern crate test;
+extern crate criterion;
 
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use quick_xml::events::Event;
 use quick_xml::Reader;
-use test::Bencher;
 
-#[bench]
-fn bench_quick_xml_normal(b: &mut Bencher) {
+// To compare against a baseline:
+// `cargo bench -- --save-baseline <name>`
+// `cargo bench -- --baseline <name>`
+//
+// To get output similar to Rust's nightly libtest, usable with benchcmp:
+// `cargo bench -- --output-format bencher`
+//
+// Criterion saves more details at: ./target/criterion/index.html
+
+fn bench_quick_xml_normal(c: &mut Criterion) {
     let src: &[u8] = include_bytes!("../tests/sample_rss.xml");
-    b.iter(|| {
+    c.bench_function("quick_xml_normal", |b| b.iter(|| {
         let mut r = Reader::from_reader(src);
         r.check_end_names(false).check_comments(false);
-        let mut count = test::black_box(0);
+        let mut count = black_box(0);
         let mut buf = Vec::new();
         loop {
             match r.read_event(&mut buf) {
@@ -24,16 +30,15 @@ fn bench_quick_xml_normal(b: &mut Bencher) {
             buf.clear();
         }
         assert_eq!(count, 1550);
-    });
+    }));
 }
 
-#[bench]
-fn bench_quick_xml_namespaced(b: &mut Bencher) {
+fn bench_quick_xml_namespaced(c: &mut Criterion) {
     let src: &[u8] = include_bytes!("../tests/sample_rss.xml");
-    b.iter(|| {
+    c.bench_function("quick_xml_namespaced", |b| b.iter(|| {
         let mut r = Reader::from_reader(src);
         r.check_end_names(false).check_comments(false);
-        let mut count = test::black_box(0);
+        let mut count = black_box(0);
         let mut buf = Vec::new();
         let mut ns_buf = Vec::new();
         loop {
@@ -45,18 +50,16 @@ fn bench_quick_xml_namespaced(b: &mut Bencher) {
             buf.clear();
         }
         assert_eq!(count, 1550);
-    });
+    }));
 }
 
-#[bench]
-fn bench_quick_xml_escaped(b: &mut Bencher) {
+fn bench_quick_xml_escaped(c: &mut Criterion) {
     let src: &[u8] = include_bytes!("../tests/sample_rss.xml");
-    b.iter(|| {
-        let mut buf = Vec::new();
+    c.bench_function("quick_xml_escaped", |b| b.iter(|| {        let mut buf = Vec::new();
         let mut r = Reader::from_reader(src);
         r.check_end_names(false).check_comments(false);
-        let mut count = test::black_box(0);
-        let mut nbtxt = test::black_box(0);
+        let mut count = black_box(0);
+        let mut nbtxt = black_box(0);
         loop {
             match r.read_event(&mut buf) {
                 Ok(Event::Start(_)) | Ok(Event::Empty(_)) => count += 1,
@@ -74,18 +77,17 @@ fn bench_quick_xml_escaped(b: &mut Bencher) {
 
         #[cfg(not(windows))]
         assert_eq!(nbtxt, 66277);
-    });
+    }));
 }
 
-#[bench]
-fn bench_quick_xml_normal_trimmed(b: &mut Bencher) {
+fn bench_quick_xml_normal_trimmed(c: &mut Criterion) {
     let src: &[u8] = include_bytes!("../tests/sample_rss.xml");
-    b.iter(|| {
+    c.bench_function("quick_xml_normal_trimmed", |b| b.iter(|| {
         let mut r = Reader::from_reader(src);
         r.check_end_names(false)
             .check_comments(false)
             .trim_text(true);
-        let mut count = test::black_box(0);
+        let mut count = black_box(0);
         let mut buf = Vec::new();
         loop {
             match r.read_event(&mut buf) {
@@ -96,18 +98,17 @@ fn bench_quick_xml_normal_trimmed(b: &mut Bencher) {
             buf.clear();
         }
         assert_eq!(count, 1550);
-    });
+    }));
 }
 
-#[bench]
-fn bench_quick_xml_namespaced_trimmed(b: &mut Bencher) {
+fn bench_quick_xml_namespaced_trimmed(c: &mut Criterion) {
     let src: &[u8] = include_bytes!("../tests/sample_rss.xml");
-    b.iter(|| {
+    c.bench_function("quick_xml_namespaced_trimmed", |b| b.iter(|| {
         let mut r = Reader::from_reader(src);
         r.check_end_names(false)
             .check_comments(false)
             .trim_text(true);
-        let mut count = test::black_box(0);
+        let mut count = black_box(0);
         let mut buf = Vec::new();
         let mut ns_buf = Vec::new();
         loop {
@@ -119,20 +120,19 @@ fn bench_quick_xml_namespaced_trimmed(b: &mut Bencher) {
             buf.clear();
         }
         assert_eq!(count, 1550);
-    });
+    }));
 }
 
-#[bench]
-fn bench_quick_xml_escaped_trimmed(b: &mut Bencher) {
+fn bench_quick_xml_escaped_trimmed(c: &mut Criterion) {
     let src: &[u8] = include_bytes!("../tests/sample_rss.xml");
-    b.iter(|| {
+    c.bench_function("quick_xml_escaped_trimmed", |b| b.iter(|| {
         let mut buf = Vec::new();
         let mut r = Reader::from_reader(src);
         r.check_end_names(false)
             .check_comments(false)
             .trim_text(true);
-        let mut count = test::black_box(0);
-        let mut nbtxt = test::black_box(0);
+        let mut count = black_box(0);
+        let mut nbtxt = black_box(0);
         loop {
             match r.read_event(&mut buf) {
                 Ok(Event::Start(_)) | Ok(Event::Empty(_)) => count += 1,
@@ -150,16 +150,15 @@ fn bench_quick_xml_escaped_trimmed(b: &mut Bencher) {
 
         #[cfg(not(windows))]
         assert_eq!(nbtxt, 50261);
-    });
+    }));
 }
 
-#[bench]
-fn bench_quick_xml_one_text_event(b: &mut Bencher) {
+fn bench_quick_xml_one_text_event(c: &mut Criterion) {
     let src = "Hello world!".repeat(512 / 12).into_bytes();
     let mut buf = Vec::with_capacity(1024);
-    b.iter(|| {
+    c.bench_function("quick_xml_one_text_event", |b| b.iter(|| {
         let mut r = Reader::from_reader(src.as_ref());
-        let mut nbtxt = test::black_box(0);
+        let mut nbtxt = black_box(0);
         r.check_end_names(false).check_comments(false);
         match r.read_event(&mut buf) {
             Ok(Event::Text(ref e)) => nbtxt += e.unescaped().unwrap().len(),
@@ -169,16 +168,15 @@ fn bench_quick_xml_one_text_event(b: &mut Bencher) {
         buf.clear();
 
         assert_eq!(nbtxt, 504);
-    })
+    }));
 }
 
-#[bench]
-fn bench_quick_xml_one_start_event_trimmed(b: &mut Bencher) {
+fn bench_quick_xml_one_start_event_trimmed(c: &mut Criterion) {
     let src = format!(r#"<hello target="{}">"#, "world".repeat(512 / 5)).into_bytes();
     let mut buf = Vec::with_capacity(1024);
-    b.iter(|| {
+    c.bench_function("quick_xml_one_start_event_trimmed", |b| b.iter(|| {
         let mut r = Reader::from_reader(src.as_ref());
-        let mut nbtxt = test::black_box(0);
+        let mut nbtxt = black_box(0);
         r.check_end_names(false)
             .check_comments(false)
             .trim_text(true);
@@ -190,16 +188,15 @@ fn bench_quick_xml_one_start_event_trimmed(b: &mut Bencher) {
         buf.clear();
 
         assert_eq!(nbtxt, 525);
-    })
+    }));
 }
 
-#[bench]
-fn bench_quick_xml_one_comment_event_trimmed(b: &mut Bencher) {
+fn bench_quick_xml_one_comment_event_trimmed(c: &mut Criterion) {
     let src = format!(r#"<!-- hello "{}" -->"#, "world".repeat(512 / 5)).into_bytes();
     let mut buf = Vec::with_capacity(1024);
-    b.iter(|| {
+    c.bench_function("quick_xml_one_comment_event_trimmed", |b| b.iter(|| {
         let mut r = Reader::from_reader(src.as_ref());
-        let mut nbtxt = test::black_box(0);
+        let mut nbtxt = black_box(0);
         r.check_end_names(false)
             .check_comments(false)
             .trim_text(true);
@@ -211,16 +208,15 @@ fn bench_quick_xml_one_comment_event_trimmed(b: &mut Bencher) {
         buf.clear();
 
         assert_eq!(nbtxt, 520);
-    })
+    }));
 }
 
-#[bench]
-fn bench_quick_xml_one_cdata_event_trimmed(b: &mut Bencher) {
+fn bench_quick_xml_one_cdata_event_trimmed(c: &mut Criterion) {
     let src = format!(r#"<![CDATA[hello "{}"]]>"#, "world".repeat(512 / 5)).into_bytes();
     let mut buf = Vec::with_capacity(1024);
-    b.iter(|| {
+    c.bench_function("quick_xml_one_cdata_event_trimmed", |b| b.iter(|| {
         let mut r = Reader::from_reader(src.as_ref());
-        let mut nbtxt = test::black_box(0);
+        let mut nbtxt = black_box(0);
         r.check_end_names(false)
             .check_comments(false)
             .trim_text(true);
@@ -232,5 +228,20 @@ fn bench_quick_xml_one_cdata_event_trimmed(b: &mut Bencher) {
         buf.clear();
 
         assert_eq!(nbtxt, 518);
-    })
+    }));
 }
+
+criterion_group!(
+    benches,
+    bench_quick_xml_normal,
+    bench_quick_xml_namespaced,
+    bench_quick_xml_escaped,
+    bench_quick_xml_normal_trimmed,
+    bench_quick_xml_namespaced_trimmed,
+    bench_quick_xml_escaped_trimmed,
+    bench_quick_xml_one_text_event,
+    bench_quick_xml_one_start_event_trimmed,
+    bench_quick_xml_one_comment_event_trimmed,
+    bench_quick_xml_one_cdata_event_trimmed,
+);
+criterion_main!(benches);
